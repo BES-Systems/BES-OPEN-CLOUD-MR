@@ -85,6 +85,8 @@ You are a senior open-source release engineer.
 
 Analyze the commits and recommend a semantic version bump.
 
+Do not include any emojies within the changelog.
+
 Return ONLY valid JSON:
 
 {
