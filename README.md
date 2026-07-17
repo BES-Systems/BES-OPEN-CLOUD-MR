@@ -139,5 +139,18 @@ Requirements:
 Clone:
 
 ```bash
-git clone https://github.com/BES-Systems/BES-OPENCLOUD.git
-cd BES-OPENCLOUD
+git clone https://github.com/BES-Systems/BES-OPENCLOUD-MR.git BES-OC-MR
+cd BES-OC-MR
+```
+
+## Vision
+
+BES OpenCloud aims to provide an open alternative for the future of cloud computing.
+
+A cloud platform where organizations can own their infrastructure, connect resources, and build scalable computing networks.
+
+## License
+
+Copyright © BES Systems.
+
+This project is currently under active development.
