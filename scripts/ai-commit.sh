@@ -1,80 +1,263 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
+
+# ============================================
+# BES AI Commit Assistant
+# Local LLM powered Git workflow
+# ============================================
 
 MODEL="gemma-4-e4b"
 LM_STUDIO_URL="http://localhost:1234/v1/chat/completions"
 
-if git diff --quiet && git diff --cached --quiet; then
-    echo "No changes detected."
+AUTO_CONFIRM=false
+RUN_REVIEW=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --yes)
+            AUTO_CONFIRM=true
+            shift
+            ;;
+        --review)
+            RUN_REVIEW=true
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+
+# --------------------------------------------
+# Requirements
+# --------------------------------------------
+
+command -v jq >/dev/null || {
+    echo "[ERROR] jq is required"
+    exit 1
+}
+
+
+# --------------------------------------------
+# Check LM Studio
+# --------------------------------------------
+
+echo "[BES AI] Checking LM Studio..."
+
+if ! curl -s "$LM_STUDIO_URL" >/dev/null; then
+    echo "[ERROR] LM Studio is not running."
+    echo "Start the local server first."
     exit 1
 fi
 
-echo "[BES AI] Analyzing changes..."
+
+# --------------------------------------------
+# Git information
+# --------------------------------------------
+
+BRANCH=$(git branch --show-current)
+
+FILES=$(git diff HEAD --name-only)
+
+if [[ -z "$FILES" ]]; then
+    echo "[BES AI] No changes detected."
+    exit 1
+fi
+
 
 DIFF=$(git diff HEAD)
 
-PROMPT="
-You are a senior software engineer.
 
-Analyze this git diff and generate a professional Conventional Commit message.
+# --------------------------------------------
+# Project context
+# --------------------------------------------
 
-Rules:
-- Format:
-  <type>: <short description>
+CONTEXT=""
 
-- Types:
-  feat     new feature
-  fix      bug fix
-  refactor code restructuring
-  docs     documentation
-  perf     performance
-  test     tests
-  build    build system
-  ci       CI/CD
-  chore    maintenance
+for FILE in README.md ARCHITECTURE.md ROADMAP.md; do
+    if [[ -f "$FILE" ]]; then
+        CONTEXT+="
+--- $FILE ---
+$(cat $FILE)
+"
+    fi
+done
 
-- Keep it under 72 characters.
-- Only output the commit message.
-- No markdown.
 
-Git diff:
+# --------------------------------------------
+# Code review
+# --------------------------------------------
 
+if [[ "$RUN_REVIEW" == true ]]; then
+
+echo "[BES AI] Running code review..."
+
+REVIEW_PROMPT="
+You are a senior software architect.
+
+Review this code change.
+
+Look for:
+- bugs
+- security problems
+- bad architecture
+- missing tests
+- performance issues
+
+Give a short review.
+
+Files:
+$FILES
+
+Diff:
 $DIFF
 "
 
+
+curl -s "$LM_STUDIO_URL" \
+-H "Content-Type: application/json" \
+-d "$(jq -n \
+--arg model "$MODEL" \
+--arg prompt "$REVIEW_PROMPT" \
+'{
+model:$model,
+messages:[
+{
+role:"user",
+content:$prompt
+}
+],
+temperature:0.1
+}')" \
+| jq -r '.choices[0].message.content'
+
+
+echo
+read -p "Continue? [y/N] " CONTINUE
+
+[[ "$CONTINUE" == "y" ]] || exit 0
+
+fi
+
+
+# --------------------------------------------
+# Generate commit
+# --------------------------------------------
+
+echo "[BES AI] Generating commit message..."
+
+
+PROMPT="
+You are a senior open-source maintainer.
+
+Generate a Conventional Commit.
+
+Rules:
+
+Format:
+
+<type>: <short title>
+
+<body>
+
+Types:
+feat
+fix
+refactor
+docs
+perf
+test
+build
+ci
+chore
+
+Requirements:
+- title max 72 characters
+- explain WHY the change happened
+- be professional
+- no markdown
+- output only the commit message
+
+
+Repository:
+BES OpenCloud
+
+Branch:
+$BRANCH
+
+
+Changed files:
+$FILES
+
+
+Project context:
+$CONTEXT
+
+
+Diff:
+$DIFF
+"
+
+
 RESPONSE=$(curl -s "$LM_STUDIO_URL" \
 -H "Content-Type: application/json" \
--d "{
-  \"model\": \"$MODEL\",
-  \"messages\": [
-    {
-      \"role\": \"user\",
-      \"content\": $(echo "$PROMPT" | jq -Rs .)
-    }
-  ],
-  \"temperature\": 0.2
-}")
+-d "$(jq -n \
+--arg model "$MODEL" \
+--arg prompt "$PROMPT" \
+'{
+model:$model,
+messages:[
+{
+role:"user",
+content:$prompt
+}
+],
+temperature:0.2
+}')")
 
 
-MESSAGE=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+MESSAGE=$(echo "$RESPONSE" \
+| jq -r '.choices[0].message.content')
+
+
+if [[ -z "$MESSAGE" || "$MESSAGE" == "null" ]]; then
+    echo "[ERROR] AI failed generating message"
+    exit 1
+fi
+
 
 echo
-echo "Generated commit:"
-echo "-----------------"
+echo "=============================="
+echo " Generated Commit"
+echo "=============================="
 echo "$MESSAGE"
-echo "-----------------"
+echo "=============================="
 echo
 
-read -p "Commit with this message? [y/N] " CONFIRM
+
+if [[ "$AUTO_CONFIRM" != true ]]; then
+    read -p "Commit? [y/N] " CONFIRM
+else
+    CONFIRM="y"
+fi
+
 
 if [[ "$CONFIRM" != "y" ]]; then
     echo "Cancelled."
     exit 0
 fi
 
+
+# --------------------------------------------
+# Commit
+# --------------------------------------------
+
 git add .
 
 git commit -m "$MESSAGE"
 
+
+echo
 echo "[BES AI] Commit completed."
