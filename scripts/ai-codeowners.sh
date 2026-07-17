@@ -105,19 +105,19 @@ Example:
 RESPONSE=$(curl -s "$LM_STUDIO_URL" \
 -H "Content-Type: application/json" \
 -d "$(jq -n \
---arg model "$MODEL" \
---arg prompt "$PROMPT" \
-'{
-model:$model,
-messages:[
-{
-role:"user",
-content:$prompt
-}
-],
-temperature:0.1
-}'
-))
+    --arg model "$MODEL" \
+    --arg prompt "$PROMPT" \
+    '{
+        model: $model,
+        messages: [
+            {
+                role: "user",
+                content: $prompt
+            }
+        ],
+        temperature: 0.1
+    }'
+)")
 
 
 CODEOWNERS=$(echo "$RESPONSE" \

@@ -1,0 +1,50 @@
+```yaml
+# CODEOWNERS for BES OpenCloud Platform
+
+# ==============================================================================
+# CORE COMPONENTS OWNERSHIP
+# These directories represent major, distinct services or layers of the platform.
+# ==============================================================================
+
+/controller @BES-Systems/backend-services
+/node @BES-Systems/infrastructure
+/network @BES-Systems/networking
+/runtime @BES-Systems/core-systems
+/storage @BES-Systems/data-layer
+/api @BES-Systems/api-definition
+
+# ==============================================================================
+# CLIENT & UI OWNERSHIP
+# These directories handle user interaction and presentation.
+# ==============================================================================
+
+/cli @BES-Systems/client-tools
+/console @BES-Systems/frontend-ui
+
+# ==============================================================================
+# DOCUMENTATION & METADATA OWNERSHIP
+# Files related to project structure, guides, and overall documentation.
+# ==============================================================================
+
+/docs @BES-Systems/technical-writing
+ARCHITECTURE.md @BES-Systems/architecture-design
+CONTRIBUTING.md @BES-Systems/community-engagement
+LICENSE @BES-Systems/legal
+README.md @BES-Systems/product-marketing
+ROADMAP.md @BES-Systems/product-management
+
+# ==============================================================================
+# UTILITY & SCRIPTS OWNERSHIP
+# Scripts used for development, build processes, and tooling.
+# ==============================================================================
+
+/scripts @BES-Systems/devops-tooling
+/examples @BES-Systems/integration-testing
+
+# ==============================================================================
+# ROOT LEVEL FILES (General Ownership)
+# These files affect the entire repository structure or are general project assets.
+# ==============================================================================
+
+* @BES-Systems/maintainers
+```
