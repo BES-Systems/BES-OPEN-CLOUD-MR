@@ -1,3 +1,9 @@
+# 0.2.1 - Fix: Version Echoing in Release Script
+
+### Version 0.2.1
+
+*   **Fix:** Ensured that the AI release script correctly echoes the version number during the build and release process.
+
 # 0.2.0 - Feature Release: AI Tooling and Component Utilities
 
 # 🚀 Features
