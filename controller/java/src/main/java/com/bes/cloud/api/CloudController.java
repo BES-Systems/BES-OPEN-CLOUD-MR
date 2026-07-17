@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class CloudController {
 
-
+    // Status route, this is early
+    // and work in progress.
     @GetMapping("/status")
     public String status() {
 
