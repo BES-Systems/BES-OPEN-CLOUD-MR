@@ -12,19 +12,17 @@ LM_STUDIO_URL="http://localhost:1234/v1/chat/completions"
 
 DRY_RUN=false
 
+
 if [[ "${1:-}" == "--dry-run" ]]; then
     DRY_RUN=true
 fi
 
 
-# --------------------------------------------
-# Requirements
-# --------------------------------------------
-
 command -v jq >/dev/null || {
     echo "[ERROR] jq required"
     exit 1
 }
+
 
 
 # --------------------------------------------
@@ -39,8 +37,9 @@ if ! curl -s "$LM_STUDIO_URL" >/dev/null; then
 fi
 
 
+
 # --------------------------------------------
-# Current version
+# Version
 # --------------------------------------------
 
 if [[ -f VERSION ]]; then
@@ -51,6 +50,7 @@ fi
 
 
 LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
 
 
 if [[ -n "$LAST_TAG" ]]; then
@@ -68,35 +68,49 @@ COMMITS=$(git log \
 fi
 
 
+
 echo
 echo "[BES AI] Current version:"
 echo "$CURRENT_VERSION"
-echo
+
 
 
 # --------------------------------------------
-# Generate release
+# Generate release analysis
 # --------------------------------------------
+
 
 PROMPT="
-You are a senior open-source release manager.
+You are a senior open-source release engineer.
 
-Analyze these commits and create a software release.
+Analyze the commits and recommend a semantic version bump.
 
-Return ONLY JSON:
+Return ONLY valid JSON:
 
 {
- version: \"x.y.z\",
- title: \"Release title\",
- changelog: \"markdown changelog\"
+  \"bump\": \"major|minor|patch\",
+  \"reason\": \"why this bump was chosen\",
+  \"version\": \"x.y.z\",
+  \"title\": \"release title\",
+  \"changelog\": \"markdown changelog\"
 }
 
 
-Rules:
-- Follow semantic versioning
-- Major = breaking changes
-- Minor = new features
-- Patch = fixes
+Semantic version rules:
+
+MAJOR:
+- Breaking API changes
+- Incompatible architecture changes
+
+MINOR:
+- New features
+- New subsystems
+- New capabilities
+
+PATCH:
+- Bug fixes
+- Documentation
+- Small improvements
 
 
 Current version:
@@ -108,6 +122,7 @@ Commits:
 
 $COMMITS
 "
+
 
 
 RESPONSE=$(curl -s "$LM_STUDIO_URL" \
@@ -123,37 +138,70 @@ role:"user",
 content:$prompt
 }
 ],
-temperature:0.2
+temperature:0.1
 }')")
 
 
-VERSION=$(echo "$RESPONSE" \
-| jq -r '.choices[0].message.content' \
-| jq -r '.version')
+
+# Extract JSON from response
+
+JSON=$(echo "$RESPONSE" \
+| jq -r '.choices[0].message.content')
 
 
-TITLE=$(echo "$RESPONSE" \
-| jq -r '.choices[0].message.content' \
-| jq -r '.title')
+
+# Remove markdown if model adds it
+
+JSON=$(echo "$JSON" \
+| sed 's/^```json//g' \
+| sed 's/^```//g' \
+| sed '/^```$/d')
 
 
-CHANGELOG=$(echo "$RESPONSE" \
-| jq -r '.choices[0].message.content' \
-| jq -r '.changelog')
+
+BUMP=$(echo "$JSON" | jq -r '.bump')
+REASON=$(echo "$JSON" | jq -r '.reason')
+VERSION=$(echo "$JSON" | jq -r '.version')
+TITLE=$(echo "$JSON" | jq -r '.title')
+CHANGELOG=$(echo "$JSON" | jq -r '.changelog')
+
 
 
 if [[ "$VERSION" == "null" ]]; then
+
     echo "[ERROR] Invalid AI response"
+    echo "$JSON"
+
     exit 1
+
 fi
+
+
+
+# --------------------------------------------
+# Preview
+# --------------------------------------------
 
 
 echo
 echo "=============================="
-echo " Release Preview"
+echo " BES AI Release Preview"
 echo "=============================="
 
-echo "Version:"
+echo
+echo "Current:"
+echo "$CURRENT_VERSION"
+
+echo
+echo "Recommended bump:"
+echo "$BUMP"
+
+echo
+echo "Reason:"
+echo "$REASON"
+
+echo
+echo "New version:"
 echo "$VERSION"
 
 echo
@@ -164,6 +212,7 @@ echo
 echo "Changelog:"
 echo "$CHANGELOG"
 
+echo
 echo "=============================="
 
 
@@ -182,12 +231,14 @@ if [[ "$CONFIRM" != "y" ]]; then
 fi
 
 
+
 # --------------------------------------------
-# Write files
+# Update files
 # --------------------------------------------
 
 
 echo "$VERSION" > VERSION
+
 
 
 if [[ -f CHANGELOG.md ]]; then
@@ -203,7 +254,9 @@ cat CHANGELOG.md >> "$TMP"
 
 mv "$TMP" CHANGELOG.md
 
+
 else
+
 
 cat > CHANGELOG.md <<EOF
 # $VERSION - $TITLE
@@ -211,12 +264,13 @@ cat > CHANGELOG.md <<EOF
 $CHANGELOG
 EOF
 
+
 fi
 
 
 
 # --------------------------------------------
-# Git release
+# Commit + tag
 # --------------------------------------------
 
 
@@ -227,9 +281,11 @@ git commit \
 -m "release: $VERSION"
 
 
+
 git tag \
 -a "$VERSION" \
 -m "$TITLE"
+
 
 
 echo
