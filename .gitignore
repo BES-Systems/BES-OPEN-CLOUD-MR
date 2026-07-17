@@ -1,0 +1,107 @@
+# ============================================
+# BES OpenCloud
+# Global Git Ignore
+# ============================================
+
+
+# --------------------
+# Java / Maven
+# --------------------
+
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+.mvn/timing.properties
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+
+# --------------------
+# Go
+# --------------------
+
+bin/
+*.exe
+*.test
+
+# Go workspace
+go.work
+
+
+# --------------------
+# C / C++
+# --------------------
+
+build/
+cmake-build-*/
+
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+
+
+# --------------------
+# OS files
+# --------------------
+
+.DS_Store
+Thumbs.db
+
+
+# --------------------
+# Logs
+# --------------------
+
+*.log
+logs/
+
+
+# --------------------
+# Environment
+# --------------------
+
+.env
+.env.*
+
+# Secrets
+*.pem
+*.key
+*.crt
+
+
+# --------------------
+# Editors
+# --------------------
+
+.vscode/
+
+
+# --------------------
+# AI generated docs/cache
+# --------------------
+
+.ai/
+.ai-cache/
+
+
+# --------------------
+# Temporary
+# --------------------
+
+tmp/
+temp/
+*.tmp
