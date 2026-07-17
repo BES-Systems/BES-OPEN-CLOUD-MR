@@ -8,5 +8,6 @@ git config alias.airelease '!bash ./scripts/ai-release.sh'
 git config alias.aichangelog '!bash ./scripts/ai-changelog.sh'
 git config alias.aireview '!bash ./scripts/ai-review.sh'
 git config alias.aiexplain '!bash ./scripts/ai-explain.sh'
+git config alias.aicodeowners '!bash ./scripts/ai-codeowners.sh'
 
 echo "[BES] Done."
