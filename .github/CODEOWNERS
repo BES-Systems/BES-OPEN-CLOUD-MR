@@ -6,12 +6,12 @@
 # These directories represent major, distinct services or layers of the platform.
 # ==============================================================================
 
-/controller @BES-Systems/backend-services
-/node @BES-Systems/infrastructure
-/network @BES-Systems/networking
-/runtime @BES-Systems/core-systems
-/storage @BES-Systems/data-layer
-/api @BES-Systems/api-definition
+/controller @allexanderbergmns
+/node @allexanderbergmns
+/network @allexanderbergmns
+/runtime @allexanderbergmns
+/storage @allexanderbergmns
+/api @allexanderbergmns
 
 # ==============================================================================
 # CLIENT & UI OWNERSHIP
